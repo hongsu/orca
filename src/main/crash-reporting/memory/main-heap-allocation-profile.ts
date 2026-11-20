@@ -3,10 +3,7 @@ import { pathToFileURL } from 'node:url'
 import { crashReporter } from 'electron'
 import { recordDurableCrashBreadcrumb } from '../breadcrumbs/durable-crash-breadcrumb'
 import { currentWorkerEntryLayout } from '../../worker-threads/worker-thread-entry-path'
-import {
-  parseMacHangPressure,
-  readMacMemorySysctl
-} from '../../hang-watchdog/hang-incident-snapshot'
+import { parseMacHangPressure, readMacMemorySysctl } from '../../hang-watchdog/mac-memory-pressure'
 import { readSamplingProfile, summarizeSamplingProfile } from './heap-allocation-sites'
 
 /**
