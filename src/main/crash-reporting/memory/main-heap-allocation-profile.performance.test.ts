@@ -66,10 +66,10 @@ describe('main heap allocation profile under machine memory pressure', () => {
     Object.defineProperty(process, 'platform', { value: platform })
   })
 
-  async function climbToCageLimit(): Promise<void> {
+  async function climbToCageLimit(mainShare = 1): Promise<void> {
     const { noteMainCageHeap } = await import('./main-heap-allocation-profile')
     for (const totalGB of [1.2, 1.6, 2.6, 2.6, 3.1]) {
-      noteMainCageHeap(totalGB * GB, totalGB * GB)
+      noteMainCageHeap(totalGB * GB, totalGB * GB * mainShare)
       await new Promise((resolve) => setImmediate(resolve))
     }
   }
@@ -88,6 +88,16 @@ describe('main heap allocation profile under machine memory pressure', () => {
     machine.residentShare = 0.1
 
     await climbToCageLimit()
+
+    expect(machine.samplerStarts).toBe(1)
+    expect(machine.profileReads).toBe(0)
+  })
+
+  it('reads nothing when resident worker heaps hide a mostly paged-out main heap', async () => {
+    machine.pressureLevel = 1
+    machine.residentShare = 0.53
+
+    await climbToCageLimit(2 / 3)
 
     expect(machine.samplerStarts).toBe(1)
     expect(machine.profileReads).toBe(0)

@@ -85,7 +85,7 @@ export function noteMainCageHeap(totalBytes: number, mainBytes: number): void {
         if (latestTotalBytes >= START_BYTES) {
           start(latestTotalBytes)
         }
-      } else if (latestTotalBytes >= current.nextReadBytes && !cageMostlyPagedOut()) {
+      } else if (latestTotalBytes >= current.nextReadBytes && !mainHeapMayBePagedOut()) {
         read(current, latestTotalBytes, latestMainBytes)
       }
     })
@@ -104,9 +104,10 @@ async function machineUnderMemoryPressure(): Promise<boolean> {
   return level === null || level >= MAC_PRESSURE_WARN_LEVEL
 }
 
-// Against the whole cage, since rss also counts the in-process workers' heaps.
-function cageMostlyPagedOut(): boolean {
-  return process.memoryUsage().rss < latestTotalBytes * MIN_RESIDENT_HEAP_SHARE
+// rss can't split main from workers, so count workers as fully resident: a wrong skip loses a diagnostic, a wrong read freezes main.
+function mainHeapMayBePagedOut(): boolean {
+  const workerBytes = latestTotalBytes - latestMainBytes
+  return process.memoryUsage().rss < workerBytes + latestMainBytes * MIN_RESIDENT_HEAP_SHARE
 }
 
 function start(totalBytes: number): void {
